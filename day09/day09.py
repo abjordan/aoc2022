@@ -8,6 +8,26 @@ def distance(head, tail):
 
 sign = lambda x: 0 if not x else int(x/abs(x))
 
+def follow(head, tail):
+    vec, dist = distance(head, tail)
+    tail_dx = 0
+    tail_dy = 0
+
+    if vec[0] == 0 and abs(vec[1]) > 1:
+        tail_dy += sign(vec[1])
+    elif vec[1] == 0 and abs(vec[0]) > 1:
+        tail_dx += sign(vec[0])
+    elif (abs(vec[0]) > 1) or (abs(vec[1]) > 1):
+        tail_dx += sign(vec[0])
+        tail_dy += sign(vec[1])
+    else:
+        # Tail doesn't move
+        pass
+
+    tail = (tail[0] + tail_dx, tail[1] + tail_dy)
+    #logger.debug(f"head: ({head[0]}, {head[1]})\ttail: ({tail[0]}, {tail[1]})\t{vec}")
+    return tail
+
 def part1(data):
     head = (0, 0)
     tail = (0, 0)
@@ -18,7 +38,7 @@ def part1(data):
     for line in data:
         direction, steps = line.strip().split(" ")
 
-        logger.debug(f" ----------- {direction} {steps} -----------")
+        #logger.debug(f" ----------- {direction} {steps} -----------")
 
         match direction:
             case "L":
@@ -35,30 +55,44 @@ def part1(data):
 
         for i in range(0, int(steps)):
             head = (head[0] + delta[0], head[1] + delta[1])
-
-            vec, dist = distance(head, tail)
-            tail_dx = 0
-            tail_dy = 0
-
-            if vec[0] == 0 and abs(vec[1]) > 1:
-                tail_dy += sign(vec[1])
-            elif vec[1] == 0 and abs(vec[0]) > 1:
-                tail_dx += sign(vec[0])
-            elif (abs(vec[0]) > 1) or (abs(vec[1]) > 1):
-                tail_dx += sign(vec[0])
-                tail_dy += sign(vec[1])
-            else:
-                # Tail doesn't move
-                pass
-
-            tail = (tail[0] + tail_dx, tail[1] + tail_dy)
+            tail = follow(head, tail)
             tail_positions.add(tail)
 
-            logger.debug(f"head: ({head[0]}, {head[1]})\ttail: ({tail[0]}, {tail[1]})\t{vec}")
     return len(tail_positions)
 
+
 def part2(data):
-    pass
+    links = [(0, 0)] * 10
+    tail_positions = set()
+    tail_positions.add(links[-1])
+
+    for line in data:
+        direction, steps = line.strip().split(" ")
+
+        #logger.debug(f" ----------- {direction} {steps} -----------")
+
+        match direction:
+            case "L":
+                delta = (-1, 0)
+            case "R": 
+                delta = (1, 0)
+            case "U":
+                delta = (0, 1)
+            case "D":
+                delta = (0, -1)
+            case _:
+                logger.error("Unknown direction: %s", direction)
+                return
+
+        for i in range(0, int(steps)):
+            head = links[0]
+            links[0] = (head[0] + delta[0], head[1] + delta[1])
+
+            for i in range(1, len(links)):
+                links[i] = follow(links[i - 1], links[i])
+
+            tail_positions.add(links[-1])
+    return len(tail_positions)
 
 if __name__ == "__main__":
     import sys
