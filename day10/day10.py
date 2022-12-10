@@ -22,8 +22,16 @@ class CRT:
         return f"@{self.clk}: X={self.X}  inst={self._inst} arg={self._arg}"
 
     def tick(self):
+        if (self.clk % 40) in [self.X - 1, self.X, self.X + 1]:
+            self._output += "█"
+        else:
+            self._output += " "
+        
         self.clk += 1
         
+        if self.clk % 40 == 0:
+            self._output += "\n"
+
         if self.clk in self.CRITICAL:
             self._critical_values.append( self.clk * self.X )
 
@@ -39,13 +47,6 @@ class CRT:
             self._arg = None
         else:
             logger.debug("Invalid processor state! {}".format(self))
-
-        if (self.clk % 40) in [self.X - 1, self.X, self.X + 1]:
-            self._output += "█"
-        else:
-            self._output += " "
-        if self.clk % 40 == 0:
-            self._output += "\n"
 
         return self.clk
     
