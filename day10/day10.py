@@ -41,9 +41,9 @@ class CRT:
             logger.debug("Invalid processor state! {}".format(self))
 
         if (self.clk % 40) in [self.X - 1, self.X, self.X + 1]:
-            self._output += "#"
+            self._output += "█"
         else:
-            self._output += "."
+            self._output += " "
         if self.clk % 40 == 0:
             self._output += "\n"
 
