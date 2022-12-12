@@ -47,7 +47,7 @@ class Monkey:
         self._true_target = int(lines[4].split(' ')[-1])
         self._false_target = int(lines[5].split(' ')[-1])
 
-    def take_turn(self):
+    def take_turn(self, chill=False):
         #logger.debug("Monkey {} takes a turn!", self._number)
         throw_list = []
         for item in self._items:
@@ -55,7 +55,10 @@ class Monkey:
             #logger.debug("  Monkey inspects item with a worry level of {}", item)
             post_inspection = self._operation(item)
             #logger.debug("    New worry level is {}", item)
-            new_worry = post_inspection // 3
+            if not chill:
+                new_worry = post_inspection // 3
+            else:
+                new_worry = post_inspection % self._common_mod
             #logger.debug("    Monkey gets bored - worry drops to {}", new_worry)
             if new_worry % self._modulus == 0:
                 #logger.debug("    Mod Check is 0: throw to {}", self._true_target)
@@ -94,7 +97,32 @@ def part1(data):
     return monkey_business_level[0] * monkey_business_level[1]
 
 def part2(data):
-    pass
+    import functools
+    import sys
+    monkeys = parse_monkeys(data)
+
+    moduli = [x._modulus for _, x in monkeys.items()]
+    common_mod = functools.reduce(operator.mul, moduli)
+    for _, x in monkeys.items():
+        x._common_mod = common_mod
+
+    for i in range(0, 10000):
+        if i % 100 == 0:
+            print('.', end='')
+            sys.stdout.flush()
+        for idx in sorted(monkeys.keys()):
+            throw_list = monkeys[idx].take_turn(chill=True)
+            for item, target in throw_list:
+                monkeys[target]._items.append(item)
+    print('')
+            
+    inspections = []
+    for idx in sorted(monkeys.keys()):
+        inspections.append(monkeys[idx]._inspections)
+        
+    monkey_business_level = sorted(inspections, reverse=True)
+    return monkey_business_level[0] * monkey_business_level[1]
+    
 
 if __name__ == "__main__":
     import sys
