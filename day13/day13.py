@@ -1,16 +1,32 @@
 from loguru import logger
 
 from enum import Enum
+from functools import cmp_to_key
 from itertools import zip_longest
 import json
+import re
+import sys
+
+sys.setrecursionlimit(9999999)
 
 class Decision(Enum):
-    CORRECT = 1
-    CONTINUE = 2
-    WRONG = 3
+    CORRECT = -1
+    CONTINUE = 0
+    WRONG = 1
     NONE = 4
 
-def part1_correct(left, right):
+def pkt_sort_key(left, right):
+    dec = pkt_sort(left, right)
+    if dec is Decision.CORRECT:
+        return -1
+    elif dec is Decision.CONTINUE:
+        return 0
+    elif dec is Decision.WRONG:
+        return 1
+    else:
+        raise ValueError(f"Error comparing {left} vs {right}: {dec}")
+
+def pkt_sort(left, right):
     #logger.debug(f"{left} {right}")
 
     # if both values are integers:
@@ -39,7 +55,7 @@ def part1_correct(left, right):
                 logger.debug("Right is empty before Left --> WRONG")
                 return Decision.WRONG
             else:
-                dec = part1_correct(l, r)
+                dec = pkt_sort(l, r)
                 if dec is not Decision.CONTINUE:
                     logger.debug("Subcomparison returned {}".format(str(dec)))
                     return dec
@@ -49,14 +65,14 @@ def part1_correct(left, right):
     #   convert the integer to a list and retry the comparison
     if type(left) is list:
         list_r = [right]
-        dec = part1_correct(left, list_r)
+        dec = pkt_sort(left, list_r)
         return dec
     if type(right) is list:
         list_l = [left]
-        dec = part1_correct(list_l, right)
+        dec = pkt_sort(list_l, right)
         return dec
     
-    return Decision.NONE
+    raise ValueError("How did we get here??? {} vs {}".format(left, right))
 
 def part1(data):
     pairs = data.split("\n\n")
@@ -68,7 +84,7 @@ def part1(data):
         left = json.loads(left)
         right = json.loads(right)
         logger.debug(f"{left} {right}")
-        compare = part1_correct(left, right)
+        compare = pkt_sort(left, right)
         logger.info(compare)
         if compare is Decision.CORRECT:
             correct_pairs.append(index)
@@ -76,7 +92,24 @@ def part1(data):
     return sum(correct_pairs)
 
 def part2(data):
-    pass
+    pkts = re.sub("\n\n", "\n", data).split("\n")
+    pkts.append("[[2]]")
+    pkts.append("[[6]]")
+    
+    json_pkts = [json.loads(x) for x in pkts]
+    
+    sorted_pkts = sorted(json_pkts, key=cmp_to_key(pkt_sort_key))
+
+    # Find the index of the [[2]]:
+    idx_2 = None
+    idx_6 = None
+    for i in range(0, len(sorted_pkts)):
+        if pkt_sort(sorted_pkts[i], [[2]]) == Decision.CONTINUE:
+            idx_2 = i+1
+        elif pkt_sort(sorted_pkts[i], [[6]]) == Decision.CONTINUE:
+            idx_6 = i+1 
+    print(idx_2, idx_6)
+    return idx_2 * idx_6
 
 if __name__ == "__main__":
     import sys
